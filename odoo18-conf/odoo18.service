@@ -1,0 +1,17 @@
+[Unit]
+Description=Odoo 18
+Requires=pgpool2.service
+After=network.target pgpool2.service
+
+[Service]
+Type=simple
+SyslogIdentifier=odoo18
+PermissionsStartOnly=true
+User=odoo18
+Group=odoo18
+ExecStart=/opt/odoo18/venv/bin/python3 /opt/odoo18/odoo/odoo-bin -c /etc/odoo18.conf
+StandardOutput=journal+console
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

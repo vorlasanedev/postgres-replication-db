@@ -1,0 +1,45 @@
+upstream odoo {
+    server 127.0.0.1:8069;
+}
+
+upstream odoo_longpolling {
+    server 127.0.0.1:8072;
+}
+
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name nahan.app;
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS server
+server {
+    listen 443 ssl;
+    server_name nahan.app;
+
+    ssl_certificate     /etc/ssl/private/nahan_app/nahan_app.crt;
+	ssl_certificate_key /etc/ssl/private/nahan_app/server.key;
+	ssl_trusted_certificate /etc/ssl/private/nahan_app/nahan_app.ca-bundle;
+
+
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Main Odoo traffic
+    location / {
+        proxy_pass http://odoo;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Websocket / longpolling traffic
+    location /websocket {
+        proxy_pass http://odoo_longpolling;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
